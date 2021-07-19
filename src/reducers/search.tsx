@@ -1,17 +1,13 @@
 import {
-  SEARCH_LEAGUE, SEARCH_LEAGUE_ADD, SEARCH_MATCH, SEARCH_MATCH_ADD, SEARCH_PLAYER, SEARCH_CLEAR_ALL
+  SEARCH_LEAGUE, SEARCH_LEAGUE_ADD, SEARCH_CLEAR_ALL
 } from '../constants/search'
 
 type PropsType = {
   league: any;
-  match: any;
-  player: any;
 }
 
 const INITIAL_STATE = {
   league: {},
-  match: {},
-  player: {},
 }
 
 export default function search(state: PropsType = INITIAL_STATE, action) {
@@ -31,31 +27,11 @@ export default function search(state: PropsType = INITIAL_STATE, action) {
         ...state,
         league: action.payload.league
       }
-    case SEARCH_MATCH:
-      return {
-        ...state,
-        match: action.payload.match
-      }
-    case SEARCH_MATCH_ADD:
-      if(action.payload.match == null){
-        return state;
-      }
-      const matchlist = state.match.records.concat(action.payload.match.records);
-      action.payload.match.records = matchlist;
-      return {
-        ...state,
-        match: action.payload.match
-      }
-    case SEARCH_PLAYER:
-      return {
-        ...state,
-        player: action.payload.player
-      }
     case SEARCH_CLEAR_ALL:
-      state.player = {};
-      state.match = {};
-      state.league = {};
-      return state
+      return {
+        ...state,
+        league: {}
+      }
     default:
       return state
   }

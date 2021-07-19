@@ -1,19 +1,23 @@
-import Taro from '@tarojs/taro'
+import Taro, {getCurrentInstance} from '@tarojs/taro'
 import {Component} from 'react'
 import {View} from '@tarojs/components'
 import {AtSearchBar, AtLoadMore} from "taro-ui"
 import {connect} from 'react-redux'
 
-import './league.scss'
+import './home.scss'
+import configAction from "../../actions/config";
 import LeagueItem from "../../components/league-item";
 import * as global from "../../constants/global";
 import withShare from "../../utils/withShare";
 import Request from "../../utils/request";
 import * as api from "../../constants/api";
 import NavBar from "../../components/nav-bar";
+import withLogin from "../../utils/withLogin";
+import {getStorage} from "../../utils/utils";
 
 type PageStateProps = {
-  // locationConfig: { city: string, province: string }
+  userInfo: any;
+  expInfo: any;
 }
 
 type PageDispatchProps = {}
@@ -29,12 +33,13 @@ type PageState = {
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
 
-interface League {
+interface Home {
   props: IProps;
 }
 
+@withLogin("didMount")
 @withShare({})
-class League extends Component<IProps, PageState> {
+class Home extends Component<IProps, PageState> {
   navRef: any = null;
 
   constructor(props) {
@@ -47,13 +52,36 @@ class League extends Component<IProps, PageState> {
     }
   }
 
-  $setSharePath = () => `/pages/home/home?page=league`
+  $loginCallback = () => {
+    this.initPayConfig();
+  }
+
+  $setSharePath = () => `/pages/home/home`
 
   componentWillMount() {
   }
 
   componentDidMount() {
-
+    configAction.getExpInfo();
+    configAction.getShareSentence();
+    const router = getCurrentInstance().router;
+    if (router && router.params && router.params.id && router.params.page) {
+      let url = '/pages/' + router.params.page + '/' + router.params.page + '?id=' + router.params.id;
+      Taro.navigateTo({
+        url: url,
+        fail: () => {
+          Taro.switchTab({url: url})
+        }
+      })
+    } else if (router && router.params && router.params.page) {
+      let url = '/pages/' + router.params.page + '/' + router.params.page;
+      Taro.navigateTo({
+        url: url,
+        fail: () => {
+          Taro.switchTab({url: url})
+        }
+      })
+    }
   }
 
   componentWillUnmount() {
@@ -61,11 +89,47 @@ class League extends Component<IProps, PageState> {
 
   componentDidShow() {
     this.getLeagueList();
+    new Request().get(api.API_CACHED_CONTROLLER, null).then((data: any) => {
+      if (data.available) {
+        global.CacheManager.getInstance().CACHE_ENABLED = true;
+      } else {
+        global.CacheManager.getInstance().CACHE_ENABLED = false;
+      }
+    })
   }
 
   componentDidHide() {
   }
 
+  initPayConfig = () => {
+    Taro.getSystemInfo().then((systemInfo) => {
+      new Request().get(api.API_SYS_PAYMENT_CONFIG, null).then(async (config: any) => {
+        const userNo = await getStorage('userNo');
+        if ((this.props.userInfo && this.props.userInfo.userNo) || userNo) {
+          new Request().get(api.API_USER_ABILITY, {userNo: userNo ? userNo : this.props.userInfo.userNo}).then((ability: any) => {
+            if (ability && ability.enablePay) {
+              configAction.setPayEnabled(true);
+              configAction.setGiftEnabled(true);
+            } else {
+              if (systemInfo.platform == 'ios') {
+                configAction.setPayEnabled(config && config.enablePayFc ? true : false);
+              } else {
+                configAction.setPayEnabled(true);
+              }
+              configAction.setGiftEnabled(config && config.enableGiftFc ? true : false);
+            }
+          });
+        } else {
+          if (systemInfo.platform == 'ios') {
+            configAction.setPayEnabled(config && config.enablePayFc ? true : false);
+          } else {
+            configAction.setPayEnabled(true);
+          }
+          configAction.setGiftEnabled(config && config.enableGiftFc ? true : false);
+        }
+      })
+    });
+  }
   onSearchChange = (value) => {
     this.setState({
       searchText: value
@@ -159,7 +223,7 @@ class League extends Component<IProps, PageState> {
     return (
       <View className='qz-league-content'>
         <NavBar
-          title='茄子TV'
+          title='茄子体育'
           ref={ref => {
             this.navRef = ref;
           }}
@@ -189,7 +253,9 @@ class League extends Component<IProps, PageState> {
 
 const mapStateToProps = (state) => {
   return {
-    // locationConfig: state.config.locationConfig
+    shareSentence: state.config ? state.config.shareSentence : [],
+    userInfo: state.user.userInfo,
+    expInfo: state.config ? state.config.expInfo : [],
   }
 }
-export default connect(mapStateToProps)(League)
+export default connect(mapStateToProps)(Home)

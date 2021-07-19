@@ -1,113 +1,84 @@
 import Taro from '@tarojs/taro'
 import {Component} from 'react'
-import {AtModal, AtModalContent, AtModalAction, AtAvatar, AtDivider} from "taro-ui"
+import {AtModal, AtModalContent, AtModalAction, AtButton, AtAvatar} from "taro-ui"
 import {View, Text, Button} from '@tarojs/components'
-import Request from '../../utils/request'
-import {getStorage} from '../../utils/utils'
-import * as api from '../../constants/api'
-import * as error from '../../constants/error'
-import defaultLogo from '../../assets/default-logo.png'
 import './index.scss'
+import defaultLogo from "../../assets/default-logo.png";
 import * as global from "../../constants/global";
 
 
-type PageStateProps = {
-  isOpened: boolean,
-}
+type PageStateProps = {}
 
-type PageDispatchProps = {
-  handleConfirm: () => any,
+type PageDispatchProps = {}
+
+type PageOwnProps = {
   handleCancel: () => any,
-  handleClose: (event?: any) => any,
-  handleError: (event?: any) => any
+  isOpened: boolean,
+  redirectPath: any,
 }
-
-type PageOwnProps = {}
 
 type PageState = {}
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
 
-interface ModalPhone {
+interface ModalRedirect {
   props: IProps;
 }
 
-class ModalPhone extends Component<IProps, PageState> {
+class ModalRedirect extends Component<IProps, PageState> {
   static defaultProps = {
-    handleClose: () => {
-    },
     handleCancel: () => {
     },
-    handleConfirm: () => {
-    },
-    handleError: () => {
-    },
-  }
-  constructor(props) {
-    super(props)
-    this.state = {
-    }
   }
 
-  handleConfirm = async (value) => {
-    Taro.showLoading({title: global.LOADING_TEXT})
-    const {handleCancel, handleConfirm, handleError} = this.props;
-    if (value && value.detail && value.detail.errMsg === "getPhoneNumber:ok") {
-      const encryptedData = value.detail.encryptedData;
-      const iv = value.detail.iv;
-      const openId = await getStorage('wechatOpenid')
-      new Request().post(api.API_PHONENUMBER, {
-        encryptedData: encryptedData,
-        iv: iv,
-        openId: openId
-      }).then((res) => {
-        if (res) {
-          handleConfirm();
-          Taro.hideLoading();
-        } else {
-          handleError(error.ERROR_WX_UPDATE_USER);
-          Taro.hideLoading();
-        }
-      }).catch(reason => {
-        console.log(reason);
-        handleError(error.ERROR_WX_UPDATE_USER);
-        Taro.hideLoading();
-      })
-    } else {
-      handleCancel();
-      Taro.hideLoading();
+  constructor(props) {
+    super(props)
+    this.state = {}
+  }
+
+  onRedirect = () => {
+    if (this.props.redirectPath == null) {
+      Taro.showToast({title: "跳转失败", icon: "none"});
+      return;
     }
+    Taro.navigateToMiniProgram({
+      appId: global.QIEZITV_APPID,
+      path: this.props.redirectPath,
+      extraData: {},
+      envVersion: 'release',
+      success: (_res) => {
+        // 打开成功
+      }
+    })
   }
 
   render() {
-    const {isOpened = false, handleClose, handleCancel} = this.props;
+    const {isOpened = false, handleCancel} = this.props;
 
     return (
-      <AtModal isOpened={isOpened} onClose={handleClose}>
-        {isOpened ? <AtModalContent>
-          <View className="center">
+      <AtModal isOpened={isOpened} onClose={handleCancel}>
+        <AtModalContent>
+          <View className="qz-redirect-modal-pic">
             <AtAvatar circle image={defaultLogo}/>
           </View>
-          <Text className="center gray qz-phone-modal-content_text">
-            获取手机号
-          </Text>
-          <AtDivider height={48} lineColor="#E5E5E5"/>
-          <View className="light-gray qz-phone-modal-content_tip">
-            • 茄子TV将获得您的手机号
-          </View>
-          <View className="light-gray qz-phone-modal-content_tip">
-            • 请验证手机号
-          </View>
-        </AtModalContent> : null}
+          <AtButton
+            className="vertical-middle"
+            size="small"
+            type="primary"
+            full
+            circle
+            onClick={this.onRedirect}>
+            点击前往茄子TV查看
+          </AtButton>
+        </AtModalContent>
         <AtModalAction>
           <Button onClick={handleCancel}>
-            <Text className="mini-gray">暂不授权</Text>
+            <Text className="mini-gray">取消</Text>
           </Button>
-          <Button open-type='getPhoneNumber' lang='zh_CN' onGetPhoneNumber={this.handleConfirm}>立即授权</Button>
         </AtModalAction>
       </AtModal>
     )
   }
 }
 
-export default ModalPhone
+export default ModalRedirect

@@ -38,6 +38,7 @@ type PageOwnProps = {
   matchId?: any;
   tabContainerStyle?: any;
   tabScrollStyle?: any;
+  redirectTargetId?: any;
 }
 
 type PageState = {
@@ -85,16 +86,29 @@ class HeatLeagueTeam extends Component<IProps, PageState> {
     this.props.onTeamHeatRefresh && this.props.onTeamHeatRefresh(this.refresh);
     this.refresh(true);
     this.startTimer_CountDown();
+    if (this.props.redirectTargetId) {
+      this.refresh(true, this.props.redirectTargetId);
+    } else {
+      this.refresh(true);
+    }
   }
 
   componentWillUnmount() {
     this.clearTimer_CountDown();
   }
 
-  refresh = (first?) => {
+  refresh = (first?, redirectTargetId?) => {
     this.props.onGetTeamHeatInfo(1, 40, this.state.searchText).then((res) => {
       if (first) {
-        this.setState({currentTeamHeat: res[0]}, () => {
+        let currentTeamHeat = res[0];
+        if (redirectTargetId != null) {
+          for (let teamHeat of res) {
+            if (teamHeat.id == redirectTargetId) {
+              currentTeamHeat = teamHeat;
+            }
+          }
+        }
+        this.setState({currentTeamHeat: currentTeamHeat}, () => {
           this.refreshCurrentTeam();
         })
       } else {
@@ -226,7 +240,7 @@ class HeatLeagueTeam extends Component<IProps, PageState> {
     this.nextPage();
   }
 
-  onPullDownRefresh=()=> {
+  onPullDownRefresh = () => {
     this.setState({pulldownRefresh: true})
     Taro.showLoading({title: global.LOADING_TEXT})
     this.refresh();

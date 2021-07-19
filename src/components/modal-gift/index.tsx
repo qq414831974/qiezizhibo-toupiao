@@ -148,6 +148,7 @@ class ModalGift extends Component<IProps, PageState> {
       userNo: userNo,
       type: global.ORDER_TYPE.gift,
       description: `茄子TV-礼物-${gift.id}-${num}-${this.props.leagueId}-${this.props.matchId}-${this.props.heatType}-${this.props.externalId}`,
+      wechatType: 2,
       attach: JSON.stringify({
         matchId: this.props.matchId,
         leagueId: this.props.leagueId,
@@ -188,6 +189,7 @@ class ModalGift extends Component<IProps, PageState> {
       userNo: userNo,
       type: global.ORDER_TYPE.gift,
       description: `茄子TV-礼物-${gift.id}-${num}-${this.props.leagueId}-${this.props.matchId}-${this.props.heatType}-${this.props.externalId}`,
+      wechatType: 2,
       attach: JSON.stringify({
         matchId: this.props.matchId,
         leagueId: this.props.leagueId,

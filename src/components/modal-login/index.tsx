@@ -78,7 +78,6 @@ class ModalLogin extends Component<IProps, PageState> {
     Taro.showLoading({title: global.LOADING_TEXT})
     const {handleCancel} = this.props;
     const userLogin = this.userLogin;
-    console.log("getUserProfile")
     wx.getUserProfile({
       desc: '请先登录再进行操作',
       lang: 'zh_CN',
@@ -100,10 +99,9 @@ class ModalLogin extends Component<IProps, PageState> {
     param.city = userInfo.city;
     param.country = userInfo.country;
     param.name = userInfo.nickName;
-    param.wechatType = 1;
     Taro.login().then(loginValue => {
       if (loginValue && loginValue.errMsg === "login:ok") {
-        new Request().post(`${api.API_LOGIN}?code=${loginValue.code}&wechatType=0`, param).then(async (res: any) => {
+        new Request().post(`${api.API_LOGIN}?code=${loginValue.code}&wechatType=2`, param).then(async (res: any) => {
           if (res.accessToken) {
             if (res.userNo && res.openId) {
               await updateStorage({wechatOpenid: res.openId});
@@ -140,7 +138,7 @@ class ModalLogin extends Component<IProps, PageState> {
           </Text>
           <AtDivider height={48} lineColor="#E5E5E5"/>
           <Text className="light-gray qz-login-modal-content_tip">
-            • 茄子TV将获得您的公开信息（昵称、头像等）
+            • 茄子体育将获得您的公开信息（昵称、头像等）
           </Text>
         </AtModalContent> : null}
         <AtModalAction>

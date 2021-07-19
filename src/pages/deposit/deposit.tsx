@@ -94,7 +94,7 @@ class Deposit extends Component<IProps, PageState> {
   }
 
   fetch = () => {
-    const openId = this.props.userInfo ? this.props.userInfo.wechatOpenid : null
+    const openId = this.props.userInfo ? this.props.userInfo.wechatOpenid2 : null
     const userNo = this.props.userInfo ? this.props.userInfo.userNo : null
     if (userNo == null || openId == null) {
       Taro.showToast({
@@ -195,7 +195,7 @@ class Deposit extends Component<IProps, PageState> {
       });
       return;
     }
-    const openId = this.props.userInfo ? this.props.userInfo.wechatOpenid : null
+    const openId = this.props.userInfo ? this.props.userInfo.wechatOpenid2 : null
     const userNo = this.props.userInfo ? this.props.userInfo.userNo : null
     Taro.showLoading({title: global.LOADING_TEXT})
     if (this.state.isPaying) {
@@ -207,6 +207,7 @@ class Deposit extends Component<IProps, PageState> {
       userNo: userNo,
       type: global.ORDER_TYPE.deposit,
       description: `茄子TV-茄币-` + price * 100,
+      wechatType: 2,
       attach: JSON.stringify({
         price: price * 100
       })

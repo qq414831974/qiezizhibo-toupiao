@@ -39,6 +39,7 @@ type PageOwnProps = {
   matchId?: any;
   tabContainerStyle?: any;
   tabScrollStyle?: any;
+  redirectTargetId?: any;
 }
 
 type PageState = {
@@ -84,18 +85,30 @@ class HeatPlayer extends Component<IProps, PageState> {
 
   componentDidMount() {
     this.props.onPlayerHeatRefresh && this.props.onPlayerHeatRefresh(this.refresh);
-    this.refresh(true);
     this.startTimer_CountDown();
+    if (this.props.redirectTargetId) {
+      this.refresh(true, this.props.redirectTargetId);
+    } else {
+      this.refresh(true);
+    }
   }
 
   componentWillUnmount() {
     this.clearTimer_CountDown();
   }
 
-  refresh = (first?) => {
+  refresh = (first?, redirectTargetId?) => {
     this.props.onGetPlayerHeatInfo(1, 40, this.state.searchText).then((res) => {
       if (first) {
-        this.setState({currentPlayerHeat: res[0]}, () => {
+        let currentPlayerHeat = res[0];
+        if (redirectTargetId != null) {
+          for (let playerHeat of res) {
+            if (playerHeat.id == redirectTargetId) {
+              currentPlayerHeat = playerHeat;
+            }
+          }
+        }
+        this.setState({currentPlayerHeat: currentPlayerHeat}, () => {
           this.refreshCurrentPlayer();
         })
       } else {
@@ -227,7 +240,7 @@ class HeatPlayer extends Component<IProps, PageState> {
     this.nextPage();
   }
 
-  onPullDownRefresh = ()=> {
+  onPullDownRefresh = () => {
     this.setState({pulldownRefresh: true})
     Taro.showLoading({title: global.LOADING_TEXT})
     this.refresh();

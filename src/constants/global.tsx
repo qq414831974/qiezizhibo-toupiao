@@ -128,10 +128,8 @@ export const BET_STATUS = {
   BET_CANCEL: 4,
 }
 export const SUBSCRIBE_TEMPLATES = {
-  MATCH_START: "Sh-UGpahk_q0RiXLtY1N1NAvPjO_10rh_vkimwC-Xi0",
-  HEAT_SURPASS: "y8VV0Wp1ndS4phfhSUgrA9QyTwgadZ2VJtmjAOMLx3M",
-  HEAT_COUNTDOWN: "2rDzauHgfdE55lncK3jgCuZuoKyNBeYj6gj4UG03S50",
-  BET_SUCCESS: "KIvAhpqkNYGc84S6ssvqN6J5UNHZS0xT_C6P-TeugCo"
+  HEAT_SURPASS: "Ht0s534wwnxODLmivuW93EYlulLpE8Y6TXNUhB6SUR0",
+  HEAT_COUNTDOWN: "gNSaRuiQ7SgQMfp8jHefg4IC5uXQ5TD5tRngxmgjn0g",
 }
 export const PAY_TYPE = {
   ONLINE: 0,
@@ -167,3 +165,5 @@ export const LEVEL_COLOR = {
   3: "#ff4136",
   4: "#B10DC9",
 }
+export const QIEZITV_APPID = "wxda885edb9daf0c9d";
+

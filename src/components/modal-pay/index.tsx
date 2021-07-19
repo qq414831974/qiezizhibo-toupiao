@@ -62,7 +62,7 @@ class ModalPay extends Component<IProps , PageState> {
   }
 
   getUserDeposit = () => {
-    const openId = this.props.userInfo ? this.props.userInfo.wechatOpenid : null
+    const openId = this.props.userInfo ? this.props.userInfo.wechatOpenid2 : null
     const userNo = this.props.userInfo ? this.props.userInfo.userNo : null
     if (userNo == null || openId == null) {
       // Taro.showToast({

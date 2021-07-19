@@ -2,25 +2,11 @@ import Taro from '@tarojs/taro'
 import {Component} from 'react'
 import {View, Text} from '@tarojs/components'
 import {AtAvatar, AtLoadMore, AtActivityIndicator} from 'taro-ui'
-import MatchItem from '../../../../components/match-item'
 
 import './index.scss'
 
-const eventType: { [key: number]: { text: string, color: string }; } = {}
-eventType[-1] = {text: "未开始", color: "unopen"};
-eventType[0] = {text: "比赛中", color: "live"};
-eventType[11] = {text: "加时", color: "live"};
-eventType[12] = {text: "点球大战", color: "live"};
-eventType[13] = {text: "伤停", color: "live"};
-eventType[14] = {text: "中场", color: "live"};
-eventType[15] = {text: "下半场", color: "live"};
-eventType[16] = {text: "暂停", color: "live"};
-eventType[21] = {text: "比赛结束", color: "finish"};
-
 type PageStateProps = {
   league: any;
-  match: any;
-  player: any;
   searchKey: string;
   isBeenSearch: boolean;
   loading: boolean;
@@ -68,10 +54,6 @@ class SearchAll extends Component<IProps, PageState> {
     this.props.switchTab(1);
   }
 
-  onMatchMoreClick = () => {
-    this.props.switchTab(2);
-  }
-
   onLeagueItemClick = (item) => {
     if (item.isParent) {
       Taro.navigateTo({url: `../series/series?id=${item.id}`});
@@ -80,22 +62,16 @@ class SearchAll extends Component<IProps, PageState> {
     }
   }
 
-  onMatchItemClick = (item) => {
-    Taro.navigateTo({url: `../live/live?id=${item.id}`});
-  }
-  onMatchItemBetClick = (item) => {
-    Taro.navigateTo({url: `../bet/bet?id=${item.id}`});
-  }
 
   render() {
-    const {league, match, player, isBeenSearch = false, loading = false, visible = false} = this.props
+    const {league, isBeenSearch = false, loading = false, visible = false} = this.props
     if (!visible) {
       return <View/>
     }
     if (loading) {
       return <View className="qz-search__result-loading"><AtActivityIndicator mode="center" content="加载中..."/></View>
     }
-    if ((league && (league.total <= 0 || league.total == null)) && (match && (match.total <= 0 || match.total == null))) {
+    if ((league && (league.total <= 0 || league.total == null))) {
       return <AtLoadMore status="noMore" noMoreText={isBeenSearch ? "什么都没找到..." : (loading ? "加载中..." : "搜一下")}/>
     }
     return (
@@ -125,41 +101,6 @@ class SearchAll extends Component<IProps, PageState> {
                       </Text>
                     </View>
                   })}
-                </View>
-              </View>
-            </View>)
-          : null
-        }
-        {match && match.total > 0 ? (
-            <View className='qz-search__result-match'>
-              <View className='qz-search__result-match-title' onClick={this.onMatchMoreClick}>
-                <Text className='qz-search__result-match-title-desc'>比赛</Text>
-                <Text className='qz-search__result-match-title-count'>{match.total}</Text>
-                <Text className='qz-search__result-match-title-more'>{`更多>`}</Text>
-              </View>
-              <View className='qz-search__result-match-content'>
-                <View className='qz-search__result-match-content__inner'>
-                  {match.records.map((item, index) => {
-                    if (index >= 5) {
-                      return
-                    }
-                    return <MatchItem key={item.id}
-                                      matchInfo={item}
-                                      onBetClick={this.onMatchItemBetClick.bind(this, item)}
-                                      onClick={this.onMatchItemClick.bind(this, item)}/>
-                  })}
-                </View>
-              </View>
-            </View>)
-          : null
-        }
-        {player && player.total > 0 ? (
-            <View className='qz-search__result-match'>
-              <View className='qz-search__result-match-title'>
-                <Text>球员</Text>
-              </View>
-              <View className='qz-search__result-match-content'>
-                <View className='qz-search__result-match-content__inner'>
                 </View>
               </View>
             </View>)

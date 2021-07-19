@@ -3,8 +3,6 @@ import {Component} from 'react'
 import {View, Text, Image, Button} from '@tarojs/components'
 import {AtIcon} from 'taro-ui'
 import {connect} from 'react-redux'
-import qqmapjs from '../../sdk/qqmap-wx-jssdk.min.js';
-import configAction from "../../actions/config";
 
 import './user.scss'
 
@@ -17,9 +15,6 @@ import * as global from '../../constants/global'
 import LoginModal from '../../components/modal-login/index';
 import PhoneModal from '../../components/modal-phone/index';
 import * as error from "../../constants/error";
-import ModalLocation from "../../components/modal-location";
-import LocationSelecter from "./components/location-selecter";
-import areaAction from "../../actions/area";
 import NavBar from "../../components/nav-bar";
 
 type PageStateProps = {
@@ -30,7 +25,6 @@ type PageStateProps = {
     phone: string,
     userExp: any,
   },
-  locationConfig: any,
   payEnabled: boolean,
   expInfo: any,
 }
@@ -43,9 +37,6 @@ type PageState = {
   loginOpen: boolean,
   phoneOpen: boolean,
   isLogin: boolean | string | null,
-  locationShow: boolean,
-  locationSelecterShow: boolean,
-  collectNum: number,
 }
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
@@ -55,13 +46,12 @@ interface User {
 }
 
 @withShare({
-  title: '茄子TV',
+  title: '茄子体育',
   imageUrl: logo,
   path: 'pages/home/home'
 })
 class User extends Component<IProps, PageState> {
 
-  qqmapsdk: qqmapjs;
   navRef: any = null;
 
   constructor(props) {
@@ -70,9 +60,6 @@ class User extends Component<IProps, PageState> {
       isLogin: false,
       loginOpen: false,
       phoneOpen: false,
-      locationShow: false,
-      locationSelecterShow: false,
-      collectNum: 0,
     }
   }
 
@@ -82,8 +69,6 @@ class User extends Component<IProps, PageState> {
   }
 
   componentDidMount() {
-    this.qqmapsdk = new qqmapjs({key: "ROVBZ-JKXH6-BJUS4-MY6WU-QXI7T-QRBPL"});
-    this.getAreas();
   }
 
   componentWillUnmount() {
@@ -92,31 +77,6 @@ class User extends Component<IProps, PageState> {
   componentDidShow() {
     Taro.showLoading({title: global.LOADING_TEXT})
     this.getUserInfo()
-    this.getCollection();
-    const getLocation = this.getLocation;
-    const initLocation = this.initLocation;
-    configAction.getLocationConfig().then(() => {
-      if (this.props.locationConfig && this.props.locationConfig.province) {
-        initLocation();
-      } else {
-        Taro.getSetting({
-          success(res) {
-            const userLocation = res && res.authSetting ? res.authSetting["scope.userLocation"] : null;
-            if (userLocation == null || (userLocation != null && userLocation == true)) {
-              Taro.getLocation({
-                success: (location) => {
-                  getLocation(location.latitude, location.longitude)
-                }, fail: () => {
-                  Taro.showToast({title: "获取位置信息失败", icon: "none"});
-                }
-              })
-            } else {
-              initLocation();
-            }
-          }
-        })
-      }
-    })
   }
 
   componentDidHide() {
@@ -125,7 +85,6 @@ class User extends Component<IProps, PageState> {
   onPullDownRefresh = () => {
     Taro.showLoading({title: global.LOADING_TEXT})
     this.getUserInfo()
-    this.initLocation();
   }
 
   async getUserInfo(onSuccess?: Function | null) {
@@ -258,95 +217,7 @@ class User extends Component<IProps, PageState> {
     this.setState({phoneOpen: false})
     this.getUserInfo()
   }
-  getAreas = () => {
-    areaAction.getAreas();
-  }
-  initLocation = async () => {
-    configAction.getLocationConfig().then(data => {
-      if (data.province) {
-        this.setState({locationShow: false})
-      }
-    })
-  }
-  getLocation = (latitude, longitude, callbackFunc: any = null) => {
-    this.qqmapsdk.reverseGeocoder({
-      location: {
-        latitude: latitude,
-        longitude: longitude
-      },
-      success: (res) => {
-        if (res && res.result) {
-          const city = res.result.address_component.city;
-          const province = res.result.address_component.province;
-          configAction.setLocationConfig({city: city, province: province}).then(() => {
-            this.initLocation();
-            callbackFunc && callbackFunc();
-          })
-        }
-      },
-      fail: (reason) => {
-        console.log(reason);
-        Taro.showToast({title: "获取位置信息失败,请手动选择", icon: "none"});
-        callbackFunc && callbackFunc();
-      }
-    })
-  }
-  onProvinceSelect = (province) => {
-    configAction.setLocationConfig({province: province.name}).then(() => {
-      this.hideLocationSelect();
-      this.initLocation();
-    })
-  }
-  onLocationClose = () => {
-    this.setState({locationShow: false})
-  }
 
-  onLocationCancel = () => {
-    this.setState({locationShow: false})
-  }
-
-  onLocationSuccess = () => {
-    this.setState({locationShow: false})
-    Taro.getLocation({
-      success: (res) => {
-        this.getLocation(res.latitude, res.longitude)
-      }, fail: () => {
-        Taro.showToast({title: "获取位置信息失败", icon: "none"});
-      }
-    })
-  }
-  showLocationSelect = () => {
-    this.setState({locationSelecterShow: true})
-  }
-  hideLocationSelect = () => {
-    this.setState({locationSelecterShow: false})
-  }
-  getCollection = async () => {
-    const collectMatch = await getStorage('collectMatch')
-    if (collectMatch == null) {
-      this.setState({
-        collectNum: 0
-      });
-    } else {
-      let collectNum = 0;
-      for (const match in collectMatch) {
-        if (collectMatch[match].id) {
-          collectNum = collectNum + 1;
-        }
-      }
-      this.setState({
-        collectNum: collectNum
-      });
-    }
-  }
-  onCollectionClick = async () => {
-    const token = await getStorage('accessToken');
-    if (token == null || token == '' || this.props.userInfo.userNo == null || this.props.userInfo.userNo == '') {
-      this.setState({loginOpen: true})
-      return;
-    }
-    Taro.navigateTo({url: `../collection/collection`});
-  }
   onVerificationClick = () => {
     const {userInfo} = this.props
     if (userInfo && userInfo.phone) {
@@ -360,14 +231,7 @@ class User extends Component<IProps, PageState> {
       this.setState({loginOpen: true})
     }
   }
-  onChargeMatchClick = async () => {
-    const token = await getStorage('accessToken');
-    if (token == null || token == '' || this.props.userInfo.userNo == null || this.props.userInfo.userNo == '') {
-      this.setState({loginOpen: true})
-      return;
-    }
-    Taro.navigateTo({url: `../orders/orders`});
-  }
+
   onAddressClick = async () => {
     const token = await getStorage('accessToken');
     if (token == null || token == '' || this.props.userInfo.userNo == null || this.props.userInfo.userNo == '') {
@@ -376,14 +240,7 @@ class User extends Component<IProps, PageState> {
     }
     Taro.navigateTo({url: `../address/address`});
   }
-  onBetClick = async () => {
-    const token = await getStorage('accessToken');
-    if (token == null || token == '' || this.props.userInfo.userNo == null || this.props.userInfo.userNo == '') {
-      this.setState({loginOpen: true})
-      return;
-    }
-    Taro.navigateTo({url: `../betOrders/betOrders`});
-  }
+
   onDepositClick = async () => {
     const token = await getStorage('accessToken');
     if (token == null || token == '' || this.props.userInfo.userNo == null || this.props.userInfo.userNo == '') {
@@ -392,14 +249,7 @@ class User extends Component<IProps, PageState> {
     }
     Taro.navigateTo({url: `../deposit/deposit`});
   }
-  onLeagueMemberClick = async () => {
-    const token = await getStorage('accessToken');
-    if (token == null || token == '' || this.props.userInfo.userNo == null || this.props.userInfo.userNo == '') {
-      this.setState({loginOpen: true})
-      return;
-    }
-    Taro.navigateTo({url: `../memberOrder/memberOrder`});
-  }
+
   getUserExpProgress = (userExp) => {
     const {expInfo} = this.props
     const userExpInfo = getExpInfoByExpValue(expInfo, userExp.exp)
@@ -412,10 +262,9 @@ class User extends Component<IProps, PageState> {
   }
 
   render() {
-    const {userInfo, locationConfig, payEnabled, expInfo} = this.props
+    const {userInfo, payEnabled, expInfo} = this.props
     const {avatar = logo, name = null, userExp = {}} = userInfo;
     const userExpInfo = getExpInfoByExpValue(expInfo, userExp.exp);
-
     return (
       <View className='qz-user-content'>
         <NavBar
@@ -459,36 +308,7 @@ class User extends Component<IProps, PageState> {
             </View>
             : null}
         </View>
-        <View className='qz-user-info-view'>
-          {/*<View className='bio'>111</View>*/}
-          <View className='item_view'>
-            <View className='item' onClick={this.showLocationSelect}>
-              <View className='title'>{locationConfig ? locationConfig.province : "未定位"}</View>
-              <View className='desc'>地区</View>
-            </View>
-            <View className='line'/>
-            <View className='item' onClick={this.onCollectionClick}>
-              <View className='title_number'>{this.state.collectNum}</View>
-              <View className='desc'>收藏</View>
-            </View>
-          </View>
-        </View>
         <View className='qz-user-list-view'>
-          <Button onClick={this.onChargeMatchClick} className='list button-list'>
-            <View className='list_title'>
-              <AtIcon className='list-title-icon' value='shopping-cart' size='18' color='#333'/>
-              {payEnabled ? "已购比赛" : "订单查看"}
-            </View>
-            <AtIcon value='chevron-right' size='18' color='#7f7f7f'/>
-          </Button>
-          {payEnabled ? <Button onClick={this.onBetClick} className='list button-list'>
-              <View className='list_title'>
-                <AtIcon className='list-title-icon' value='shopping-bag' size='18' color='#333'/>
-                我的竞猜
-              </View>
-              <AtIcon value='chevron-right' size='18' color='#7f7f7f'/>
-            </Button>
-            : null}
           {payEnabled ? <Button onClick={this.onDepositClick} className='list button-list'>
               <View className='list_title'>
                 <AtIcon className='list-title-icon' value='money' size='18' color='#333'/>
@@ -497,13 +317,6 @@ class User extends Component<IProps, PageState> {
               <AtIcon value='chevron-right' size='18' color='#7f7f7f'/>
             </Button>
             : null}
-          <Button onClick={this.onLeagueMemberClick} className='list button-list'>
-            <View className='list_title'>
-              <AtIcon className='list-title-icon' value='sketch' size='18' color='#333'/>
-              我的联赛会员
-            </View>
-            <AtIcon value='chevron-right' size='18' color='#7f7f7f'/>
-          </Button>
         </View>
         <View className='qz-user-list-view'>
           <Button onClick={this.onAddressClick} className='list button-list'>
@@ -557,18 +370,6 @@ class User extends Component<IProps, PageState> {
           handleCancel={this.onPhoneCancel}
           handleClose={this.onPhoneClose}
           handleError={this.onPhoneError}/>
-        <ModalLocation
-          isOpened={this.state.locationShow}
-          handleConfirm={this.onLocationSuccess}
-          handleCancel={this.onLocationCancel}
-          handleClose={this.onLocationClose}/>
-        <LocationSelecter
-          show={this.state.locationSelecterShow}
-          onCancel={this.hideLocationSelect}
-          onClose={this.hideLocationSelect}
-          location={locationConfig}
-          onProvinceSelect={this.onProvinceSelect}
-          getLocation={this.getLocation}/>
       </View>
     )
   }
@@ -576,7 +377,7 @@ class User extends Component<IProps, PageState> {
 
 const mapStateToProps = (state) => {
   return {
-    userInfo: state.user.userInfo,
+    userInfo: state.user.userInfo ? state.user.userInfo : {},
     expInfo: state.config ? state.config.expInfo : null,
     locationConfig: state.config ? state.config.locationConfig : null,
     payEnabled: state.config ? state.config.payEnabled : null,
